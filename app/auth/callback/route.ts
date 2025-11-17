@@ -7,7 +7,13 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const origin = requestUrl.origin;
 
-  if (code) {
+  // If no code, redirect to login
+  if (!code) {
+    console.error("No code parameter in callback URL");
+    return NextResponse.redirect(`${origin}/login?error=missing_code`);
+  }
+
+  try {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
@@ -15,9 +21,12 @@ export async function GET(request: NextRequest) {
       console.error("Error exchanging code for session:", error);
       return NextResponse.redirect(`${origin}/login?error=auth_failed`);
     }
-  }
 
-  // Redirect to dashboard after successful authentication
-  return NextResponse.redirect(`${origin}/dashboard`);
+    // Redirect to dashboard after successful authentication
+    return NextResponse.redirect(`${origin}/dashboard`);
+  } catch (error) {
+    console.error("Unexpected error in auth callback:", error);
+    return NextResponse.redirect(`${origin}/login?error=unexpected_error`);
+  }
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,20 +13,21 @@ import { Calendar, Mail } from "lucide-react";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
   const handleSendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(false);
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${siteUrl}/auth/callback`,
       },
     });
 
@@ -33,8 +35,8 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      setSuccess(true);
-      setLoading(false);
+      // Redirect to check-email page after successful OTP send
+      router.push(`/check-email?email=${encodeURIComponent(email)}`);
     }
   };
 
@@ -70,59 +72,35 @@ export default function LoginPage() {
               </p>
             </div>
           )}
-          {success ? (
-            <div className="space-y-4">
-              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
-                <p className="text-sm text-green-800 font-medium mb-1">
-                  ✉️ Check your email for the login link.
-                </p>
-                <p className="text-xs text-green-700">
-                  We've sent a magic link to {email}. Click the link in the email to sign in.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full font-semibold"
-                onClick={() => {
-                  setSuccess(false);
-                  setEmail("");
-                }}
-              >
-                Send another link
-              </Button>
+          <form onSubmit={handleSendMagicLink} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          ) : (
-            <form onSubmit={handleSendMagicLink} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+            {error && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                {error}
               </div>
-              {error && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                  {error}
-                </div>
-              )}
-              <Button type="submit" className="w-full font-bold text-base py-3" disabled={loading}>
-                <Mail className="mr-2 h-4 w-4" />
-                {loading ? "Sending..." : "Send Magic Link"}
-              </Button>
+            )}
+            <Button type="submit" className="w-full font-bold text-base py-3" disabled={loading}>
+              <Mail className="mr-2 h-4 w-4" />
+              {loading ? "Sending..." : "Send Magic Link"}
+            </Button>
 
-              <div className="text-center text-sm mt-4">
-                <span className="text-gray-600">Don't have an account? </span>
-                <Link href="/signup" className="text-purple-600 font-semibold hover:underline hover:text-pink-600 transition-colors">
-                  Sign up
-                </Link>
-              </div>
-            </form>
-          )}
+            <div className="text-center text-sm mt-4">
+              <span className="text-gray-600">Don't have an account? </span>
+              <Link href="/signup" className="text-purple-600 font-semibold hover:underline hover:text-pink-600 transition-colors">
+                Sign up
+              </Link>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>

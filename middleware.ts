@@ -2,24 +2,25 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // ALWAYS allow these public routes - no auth checks
+  const publicRoutes = ["/", "/demo", "/login", "/signup", "/check-email", "/favicon.ico"];
+  const isAlwaysPublic = 
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith("/auth/callback") ||
+    pathname.startsWith("/api/");
+
+  if (isAlwaysPublic) {
+    return NextResponse.next();
+  }
+
   // Check if Supabase credentials are configured
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Allow public pages without Supabase
-    if (
-      request.nextUrl.pathname === "/" ||
-      request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/signup" ||
-      request.nextUrl.pathname === "/demo" ||
-      request.nextUrl.pathname.startsWith("/auth/callback") ||
-      request.nextUrl.pathname.startsWith("/api/") ||
-      request.nextUrl.pathname === "/favicon.ico"
-    ) {
-      return NextResponse.next();
-    }
-    // Otherwise redirect to landing page
+    // If Supabase not configured and not a public route, redirect to home
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
@@ -56,15 +57,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Allow public routes
-  const publicRoutes = ["/", "/demo", "/login", "/signup", "/favicon.ico"];
-  const isPublicRoute = 
-    publicRoutes.includes(request.nextUrl.pathname) ||
-    request.nextUrl.pathname.startsWith("/auth/callback") ||
-    request.nextUrl.pathname.startsWith("/api/");
-
-  // Protect all dashboard routes
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  // Protect all dashboard routes - redirect to login if not authenticated
+  if (!user && pathname.startsWith("/dashboard")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -73,8 +67,8 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from login/signup
   if (
     user &&
-    (request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/signup")
+    (pathname === "/login" ||
+      pathname === "/signup")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
@@ -85,8 +79,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
 
