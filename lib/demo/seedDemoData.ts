@@ -113,8 +113,20 @@ export async function seedDemoDataForTeam(teamId: string): Promise<void> {
 
   // 4) Create clients with realistic data
   const today = new Date();
-  const clients: any[] = [];
-  const followups: any[] = [];
+  
+  interface ClientInsert {
+    profile_id: string;
+    team_id: string;
+    name: string;
+    phone: string;
+    service_type: string;
+    last_visit: string;
+    next_due: string;
+    stylist: string;
+    notes: string | null;
+  }
+  
+  const clients: ClientInsert[] = [];
 
   for (let i = 0; i < 35; i++) {
     const name = UK_NAMES[i % UK_NAMES.length];
@@ -176,7 +188,14 @@ export async function seedDemoDataForTeam(teamId: string): Promise<void> {
   }
 
   // 5) Create followups
-  const followupsToInsert = insertedClients.map((client, index) => {
+  interface FollowupInsert {
+    client_id: string;
+    type: "reminder";
+    status: "pending" | "overdue" | "sent";
+    date_sent: string;
+  }
+  
+  const followupsToInsert: FollowupInsert[] = insertedClients.map((client, index) => {
     const originalClient = clients[index];
     const daysUntilDue = Math.floor(
       (new Date(client.next_due).getTime() - today.getTime()) /

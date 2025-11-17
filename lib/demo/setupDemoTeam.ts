@@ -85,6 +85,9 @@ export async function ensureDemoTeamAndUser(): Promise<{
 
   if (!profile) {
     // Create profile
+    if (!demoTeam) {
+      throw new Error("Failed to create demo team");
+    }
     const { error: profileError } = await supabase.from("profiles").insert({
       id: demoUser.id,
       team_id: demoTeam.id,
@@ -97,6 +100,9 @@ export async function ensureDemoTeamAndUser(): Promise<{
     }
   } else {
     // Update existing profile
+    if (!demoTeam) {
+      throw new Error("Failed to create demo team");
+    }
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -109,6 +115,11 @@ export async function ensureDemoTeamAndUser(): Promise<{
     if (updateError) {
       throw new Error(`Failed to update profile: ${updateError.message}`);
     }
+  }
+
+  // Ensure demoTeam is defined before proceeding
+  if (!demoTeam) {
+    throw new Error("Failed to create demo team");
   }
 
   // 4) Update team owner_id if needed
