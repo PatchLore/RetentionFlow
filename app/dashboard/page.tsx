@@ -213,7 +213,7 @@ export default function RetentionFlowDashboard() {
           );
       return matchesSearch && matchesService;
     });
-  }, [searchTerm, filterService]);
+  }, [overdueClients, searchTerm, filterService]);
 
   const filteredDueSoonClients = useMemo(() => {
     return dueSoonClients.filter((client) => {
@@ -246,12 +246,13 @@ export default function RetentionFlowDashboard() {
     setModalOpen(true);
   };
 
-  const handleReminderSent = (
-    message: string,
-    method: "whatsapp" | "email" | "sms",
-    client: Client,
-  ) => {
-    console.log("Demo reminder sent:", { message, method, client });
+  const handleReminderSent = (updatedMessage: string) => {
+    if (!selectedClient) return;
+
+    console.log("Demo reminder sent:", {
+      message: updatedMessage,
+      client: selectedClient,
+    });
 
     // Update the client's reminder status in state
     const now = new Date();
@@ -259,21 +260,21 @@ export default function RetentionFlowDashboard() {
 
     setOverdueClients((prevClients) =>
       prevClients.map((c) =>
-        c.id === client.id
+        c.id === selectedClient.id
           ? {
               ...c,
               reminderStatus: {
                 sent: formattedDate,
                 opened: false,
                 responded: false,
-                method: method === "whatsapp" ? "sms" : method, // Map whatsapp to sms for display
+                method: "sms", // WhatsApp maps to sms
               },
             }
           : c,
       ),
     );
 
-    setSentReminders((prev) => new Set(prev).add(client.id));
+    setSentReminders((prev) => new Set(prev).add(selectedClient.id));
     setToastMessage("Reminder sent (demo only)");
     setToastVisible(true);
 
@@ -281,7 +282,7 @@ export default function RetentionFlowDashboard() {
     setTimeout(() => {
       setSentReminders((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(client.id);
+        newSet.delete(selectedClient.id);
         return newSet;
       });
     }, 3000);

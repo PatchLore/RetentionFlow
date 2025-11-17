@@ -33,11 +33,7 @@ interface ReminderModalProps {
   open: boolean;
   onClose: () => void;
   client: Client | null;
-  onSend: (
-    message: string,
-    method: "whatsapp" | "email" | "sms",
-    client: Client,
-  ) => void;
+  onSend: (message: string) => void;
 }
 
 export function ReminderModal({
@@ -100,10 +96,12 @@ export function ReminderModal({
   if (!open || !client) return null;
 
   const handleSend = async () => {
+    if (!client) return;
+
     setIsSending(true);
     // Simulate sending delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    onSend(message, method, client);
+    onSend(message);
     setIsSending(false);
     onClose();
   };
