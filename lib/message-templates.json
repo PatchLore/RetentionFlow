@@ -1,0 +1,6 @@
+{
+  "reminder_template": "Hi {{name}}! 👋\n\nIt's been a while since your last {{service_type}} appointment. We'd love to see you again!\n\nYour next appointment is due in {{days}} days. Would you like to book your next visit?\n\nLooking forward to seeing you! 💇‍♀️",
+  "review_template": "Hi {{name}}! 🌟\n\nWe hope you loved your recent {{service_type}} with {{stylist}}!\n\nWe'd be so grateful if you could leave us a quick review. Your feedback means the world to us!\n\nThank you! 💕",
+  "birthday_template": "Happy Birthday {{name}}! 🎉🎂\n\nWe hope your special day is filled with joy and happiness!\n\nAs a birthday treat, we'd love to offer you 10% off your next {{service_type}} appointment. Book now to celebrate! 🎁"
+}
+

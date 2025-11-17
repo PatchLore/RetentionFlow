@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 270 20% 96%;
+    --foreground: 270 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 270 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 10% 10%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 40% 96%;
+    --secondary-foreground: 270 10% 10%;
+    --muted: 270 30% 95%;
+    --muted-foreground: 270 10% 40%;
+    --accent: 270 40% 96%;
+    --accent-foreground: 270 10% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 270 30% 90%;
+    --input: 270 30% 90%;
+    --ring: 262 83% 58%;
+    --radius: 1rem;
+    --chart-1: 262 83% 58%;
+    --chart-2: 330 81% 60%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262.1 83.3% 57.8%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background: linear-gradient(to bottom right, hsl(270 50% 96%), hsl(330 50% 96%), hsl(0 0% 100%));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+  }
+}
+
