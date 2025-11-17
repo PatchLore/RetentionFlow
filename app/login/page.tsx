@@ -1,54 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { handleDemoLogin } from "@/app/actions/demoLogin";
-import { Sparkles, Calendar } from "lucide-react";
+import { Calendar, Mail } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
   const supabase = createClient();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(false);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
     if (error) {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/dashboard");
-      router.refresh();
-    }
-  };
-
-  const handleDemoClick = async () => {
-    setDemoLoading(true);
-    setError(null);
-
-    try {
-      await handleDemoLogin();
-      // Redirect happens server-side
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load demo");
-      setDemoLoading(false);
+      setSuccess(true);
+      setLoading(false);
     }
   };
 
@@ -67,10 +53,10 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Welcome to RebookFlow
+            Welcome to RetentionFlow
           </CardTitle>
           <CardDescription className="text-center text-gray-600">
-            Sign in to your account
+            Sign in with a magic link sent to your email
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -84,64 +70,59 @@ export default function LoginPage() {
               </p>
             </div>
           )}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && (
-              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                {error}
+          {success ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800 font-medium mb-1">
+                  ✉️ Check your email for the login link.
+                </p>
+                <p className="text-xs text-green-700">
+                  We've sent a magic link to {email}. Click the link in the email to sign in.
+                </p>
               </div>
-            )}
-            <Button type="submit" className="w-full font-bold text-base py-3" disabled={loading || demoLoading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-            
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-purple-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-3 text-gray-500 font-medium">Or</span>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full font-semibold"
+                onClick={() => {
+                  setSuccess(false);
+                  setEmail("");
+                }}
+              >
+                Send another link
+              </Button>
             </div>
+          ) : (
+            <form onSubmit={handleSendMagicLink} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error}
+                </div>
+              )}
+              <Button type="submit" className="w-full font-bold text-base py-3" disabled={loading}>
+                <Mail className="mr-2 h-4 w-4" />
+                {loading ? "Sending..." : "Send Magic Link"}
+              </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full font-bold text-base py-3 border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
-              onClick={handleDemoClick}
-              disabled={loading || demoLoading}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              {demoLoading ? "Loading demo..." : "Try Demo"}
-            </Button>
-
-            <div className="text-center text-sm mt-4">
-              <span className="text-gray-600">Don't have an account? </span>
-              <Link href="/signup" className="text-purple-600 font-semibold hover:underline hover:text-pink-600 transition-colors">
-                Sign up
-              </Link>
-            </div>
-          </form>
+              <div className="text-center text-sm mt-4">
+                <span className="text-gray-600">Don't have an account? </span>
+                <Link href="/signup" className="text-purple-600 font-semibold hover:underline hover:text-pink-600 transition-colors">
+                  Sign up
+                </Link>
+              </div>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

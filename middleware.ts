@@ -7,11 +7,15 @@ export async function middleware(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Allow landing, login, and signup pages without Supabase
+    // Allow public pages without Supabase
     if (
       request.nextUrl.pathname === "/" ||
       request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/signup"
+      request.nextUrl.pathname === "/signup" ||
+      request.nextUrl.pathname === "/demo" ||
+      request.nextUrl.pathname.startsWith("/auth/callback") ||
+      request.nextUrl.pathname.startsWith("/api/") ||
+      request.nextUrl.pathname === "/favicon.ico"
     ) {
       return NextResponse.next();
     }
@@ -52,14 +56,15 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect dashboard and client routes
-  if (
-    !user &&
-    (request.nextUrl.pathname.startsWith("/dashboard") ||
-      request.nextUrl.pathname.startsWith("/clients") ||
-      request.nextUrl.pathname.startsWith("/templates") ||
-      request.nextUrl.pathname.startsWith("/reports"))
-  ) {
+  // Allow public routes
+  const publicRoutes = ["/", "/demo", "/login", "/signup", "/favicon.ico"];
+  const isPublicRoute = 
+    publicRoutes.includes(request.nextUrl.pathname) ||
+    request.nextUrl.pathname.startsWith("/auth/callback") ||
+    request.nextUrl.pathname.startsWith("/api/");
+
+  // Protect all dashboard routes
+  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
