@@ -109,7 +109,7 @@ export default function RetentionFlowDashboard() {
     },
   ];
 
-  const dueSoonClients: Client[] = [
+  const DEMO_DUE_SOON_CLIENTS: Client[] = [
     {
       id: 4,
       name: "Sarah Mitchell",
@@ -194,6 +194,9 @@ export default function RetentionFlowDashboard() {
 
   const [overdueClients, setOverdueClients] =
     useState<Client[]>(DEMO_OVERDUE_CLIENTS);
+  const [dueSoonClients, setDueSoonClients] = useState<Client[]>(
+    DEMO_DUE_SOON_CLIENTS,
+  );
 
   // Filter clients based on search and service filter
   const filteredOverdueClients = useMemo(() => {
@@ -232,7 +235,7 @@ export default function RetentionFlowDashboard() {
           );
       return matchesSearch && matchesService;
     });
-  }, [searchTerm, filterService]);
+  }, [dueSoonClients, searchTerm, filterService]);
 
   const calculateRevenue = (clients: Client[]) => {
     return clients.reduce((sum, client) => sum + client.avgSpend, 0);
@@ -258,21 +261,45 @@ export default function RetentionFlowDashboard() {
     const now = new Date();
     const formattedDate = format(now, "MMM d, yyyy");
 
-    setOverdueClients((prevClients) =>
-      prevClients.map((c) =>
-        c.id === selectedClient.id
-          ? {
-              ...c,
-              reminderStatus: {
-                sent: formattedDate,
-                opened: false,
-                responded: false,
-                method: "sms", // WhatsApp maps to sms
-              },
-            }
-          : c,
-      ),
-    );
+    // Determine which list the client belongs to and update the correct one
+    const isOverdue = overdueClients.some((c) => c.id === selectedClient.id);
+    const isDueSoon = dueSoonClients.some((c) => c.id === selectedClient.id);
+
+    if (isOverdue) {
+      setOverdueClients((prevClients) =>
+        prevClients.map((c) =>
+          c.id === selectedClient.id
+            ? {
+                ...c,
+                reminderStatus: {
+                  sent: formattedDate,
+                  opened: false,
+                  responded: false,
+                  method: "sms", // WhatsApp maps to sms
+                },
+              }
+            : c,
+        ),
+      );
+    }
+
+    if (isDueSoon) {
+      setDueSoonClients((prevClients) =>
+        prevClients.map((c) =>
+          c.id === selectedClient.id
+            ? {
+                ...c,
+                reminderStatus: {
+                  sent: formattedDate,
+                  opened: false,
+                  responded: false,
+                  method: "sms", // WhatsApp maps to sms
+                },
+              }
+            : c,
+        ),
+      );
+    }
 
     setSentReminders((prev) => new Set(prev).add(selectedClient.id));
     setToastMessage("Reminder sent (demo only)");
