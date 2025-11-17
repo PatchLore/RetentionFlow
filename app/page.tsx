@@ -14,13 +14,11 @@ import {
   MessageCircle,
   Sparkles,
 } from "lucide-react";
-import { handleDemoLogin } from "@/app/actions/demoLogin";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
   const router = useRouter();
 
   // Check if Supabase is configured
@@ -56,22 +54,6 @@ export default function LandingPage() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  const handleTryDemo = async () => {
-    if (!isSupabaseConfigured) {
-      alert("Supabase is not configured. Please set up your environment variables first.");
-      return;
-    }
-
-    setDemoLoading(true);
-    try {
-      await handleDemoLogin();
-      // Redirect happens server-side
-    } catch (err) {
-      console.error("Demo login error:", err);
-      setDemoLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
       {/* Header */}
@@ -92,13 +74,12 @@ export default function LandingPage() {
             >
               Sign In
             </Link>
-            <button
-              onClick={handleTryDemo}
-              disabled={demoLoading}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            <Link
+              href="/demo"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
             >
-              {demoLoading ? "Loading..." : "Try Demo"}
-            </button>
+              Try Demo
+            </Link>
           </div>
         </div>
       </header>
@@ -126,14 +107,13 @@ export default function LandingPage() {
           >
             Get Started Free →
           </Link>
-          <button
-            onClick={handleTryDemo}
-            disabled={demoLoading}
-            className="border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-purple-50 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          <Link
+            href="/demo"
+            className="border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-purple-50 transform hover:scale-105 transition-all"
           >
             <Sparkles className="inline mr-2 h-5 w-5" />
-            {demoLoading ? "Loading..." : "Try Demo"}
-          </button>
+            Try Demo
+          </Link>
         </div>
         <p className="mt-6 text-sm text-gray-500">
           🎉 Early adopters get{" "}
@@ -495,18 +475,17 @@ export default function LandingPage() {
             </div>
           )}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-6">
-            <button
-              onClick={handleTryDemo}
-              disabled={demoLoading}
-              className="border-2 border-white text-white px-8 py-4 rounded-full font-bold hover:bg-white/10 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            <Link
+              href="/demo"
+              className="border-2 border-white text-white px-8 py-4 rounded-full font-bold hover:bg-white/10 transform hover:scale-105 transition-all"
             >
               <Sparkles className="inline mr-2 h-5 w-5" />
-              {demoLoading ? "Loading..." : "Try Demo"}
-            </button>
+              Try Demo
+            </Link>
           </div>
-          <p className="mt-6 text-purple-100">
-            Or simply click "Try Demo" to explore the full system
-          </p>
+                <p className="mt-6 text-purple-100">
+                  Or simply click "Try Demo" to preview the full system
+                </p>
         </div>
       </section>
 
