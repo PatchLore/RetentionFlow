@@ -13,6 +13,7 @@ import {
   CheckCircle,
   Eye,
   MessageCircle,
+  MessageSquare,
   Mail,
   Search,
   Filter,
@@ -53,8 +54,8 @@ export default function RetentionFlowDashboard() {
   const [toastMessage, setToastMessage] = useState("");
   const [sentReminders, setSentReminders] = useState<Set<number>>(new Set());
 
-  // Mock data with reminder status
-  const overdueClients: Client[] = [
+  // Mock data with reminder status - stored in state for demo updates
+  const DEMO_OVERDUE_CLIENTS: Client[] = [
     {
       id: 1,
       name: "Charlotte Moore",
@@ -191,6 +192,9 @@ export default function RetentionFlowDashboard() {
     },
   ];
 
+  const [overdueClients, setOverdueClients] =
+    useState<Client[]>(DEMO_OVERDUE_CLIENTS);
+
   // Filter clients based on search and service filter
   const filteredOverdueClients = useMemo(() => {
     return overdueClients.filter((client) => {
@@ -248,8 +252,29 @@ export default function RetentionFlowDashboard() {
     client: Client,
   ) => {
     console.log("Demo reminder sent:", { message, method, client });
+
+    // Update the client's reminder status in state
+    const now = new Date();
+    const formattedDate = format(now, "MMM d, yyyy");
+
+    setOverdueClients((prevClients) =>
+      prevClients.map((c) =>
+        c.id === client.id
+          ? {
+              ...c,
+              reminderStatus: {
+                sent: formattedDate,
+                opened: false,
+                responded: false,
+                method: method === "whatsapp" ? "sms" : method, // Map whatsapp to sms for display
+              },
+            }
+          : c,
+      ),
+    );
+
     setSentReminders((prev) => new Set(prev).add(client.id));
-    setToastMessage(`✓ Reminder sent to ${client.name}!`);
+    setToastMessage("Reminder sent (demo only)");
     setToastVisible(true);
 
     // Reset button state after 3 seconds
@@ -263,6 +288,28 @@ export default function RetentionFlowDashboard() {
   };
 
   const handleSendAllReminders = (clients: Client[]) => {
+    // Update all clients' reminder status in state
+    const now = new Date();
+    const formattedDate = format(now, "MMM d, yyyy");
+
+    setOverdueClients((prevClients) =>
+      prevClients.map((c) => {
+        const isInList = clients.some((client) => client.id === c.id);
+        if (isInList && !c.reminderStatus.sent) {
+          return {
+            ...c,
+            reminderStatus: {
+              sent: formattedDate,
+              opened: false,
+              responded: false,
+              method: "sms", // WhatsApp maps to sms
+            },
+          };
+        }
+        return c;
+      }),
+    );
+
     // Mark all clients as having sent reminders (demo only)
     clients.forEach((client) => {
       setSentReminders((prev) => new Set(prev).add(client.id));
@@ -291,6 +338,29 @@ export default function RetentionFlowDashboard() {
         <div className="text-xs text-gray-500 mt-2">
           <Clock className="w-3 h-3 inline mr-1" />
           No reminder sent yet
+        </div>
+      );
+    }
+
+    // Check if this is a demo reminder (sent via the modal)
+    const isDemoReminder = status.sent && !status.opened && !status.responded;
+
+    if (isDemoReminder) {
+      return (
+        <div className="mt-2 space-y-1">
+          <div className="flex items-center gap-2 text-xs">
+            <CheckCircle className="w-3 h-3 text-green-600" />
+            <span className="text-green-600 font-medium">
+              Reminder sent (Demo)
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-600 ml-5">
+            <span>Sent: {status.sent}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-600 ml-5">
+            <MessageSquare className="w-3 h-3 text-green-600" />
+            <span>Via WhatsApp</span>
+          </div>
         </div>
       );
     }
