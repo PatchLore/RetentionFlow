@@ -450,34 +450,44 @@ export default function RetentionFlowDashboard() {
     client: Client;
     isOverdue: boolean;
   }) => (
-    <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-purple-100 hover:border-purple-300 hover:shadow-xl transition-all">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="font-bold text-lg text-gray-900">{client.name}</h3>
-          <p className="text-purple-600 font-semibold">{client.service}</p>
+    <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-purple-100 hover:border-purple-300 hover:shadow-xl transition-all flex flex-col justify-between min-h-[400px] h-full">
+      <div>
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-lg text-gray-900 truncate">
+              {client.name}
+            </h3>
+            <p className="text-purple-600 font-semibold truncate">
+              {client.service}
+            </p>
+          </div>
+          {isOverdue && (
+            <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ml-2">
+              OVERDUE
+            </span>
+          )}
         </div>
-        {isOverdue && (
-          <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold">
-            OVERDUE
-          </span>
-        )}
-      </div>
 
-      <div className="space-y-2 text-sm text-gray-600 mb-3">
-        <div className="flex justify-between">
-          <span>Last Visit:</span>
-          <span className="font-medium">{client.lastVisit}</span>
+        <div className="space-y-2 text-sm text-gray-600 mb-3">
+          <div className="flex justify-between">
+            <span>Last Visit:</span>
+            <span className="font-medium truncate ml-2">
+              {client.lastVisit}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>Next Due:</span>
+            <span className="font-medium truncate ml-2">{client.nextDue}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Avg. Spend:</span>
+            <span className="font-bold text-green-600">£{client.avgSpend}</span>
+          </div>
         </div>
-        <div className="flex justify-between">
-          <span>Next Due:</span>
-          <span className="font-medium">{client.nextDue}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span>Avg. Spend:</span>
-          <span className="font-bold text-green-600">£{client.avgSpend}</span>
+        <div className="min-h-[60px]">
+          <ReminderStatusBadge status={client.reminderStatus} />
         </div>
       </div>
-      <ReminderStatusBadge status={client.reminderStatus} />
       <button
         onClick={() => handleSendReminder(client)}
         className={`w-full mt-4 py-2 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2 ${
