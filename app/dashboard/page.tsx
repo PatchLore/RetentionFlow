@@ -242,7 +242,7 @@ export default function RetentionFlowDashboard() {
 
   const handleReminderSent = (
     message: string,
-    method: "sms" | "email",
+    method: "whatsapp" | "email" | "sms",
     client: Client,
   ) => {
     console.log("Demo reminder sent:", { message, method, client });
