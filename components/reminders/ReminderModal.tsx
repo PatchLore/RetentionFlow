@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { X, MessageCircle, Mail, Send, Sparkles } from "lucide-react";
 
+interface ReminderStatus {
+  sent: string | null;
+  opened: boolean;
+  responded: boolean;
+  method: "sms" | "email" | null;
+}
+
 interface Client {
   id: number;
   name: string;
@@ -10,6 +17,8 @@ interface Client {
   lastVisit: string;
   nextDue: string;
   avgSpend: number;
+  reminderStatus: ReminderStatus;
+  message?: string;
   isOverdue?: boolean;
 }
 
