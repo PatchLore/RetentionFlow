@@ -26,28 +26,63 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/api/");
 
+  // Check if Supabase is configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // If Supabase not configured, allow public routes, block protected routes
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (isPublic) {
+      return response;
+    }
+    // Redirect protected routes to home if Supabase not configured
+    if (pathname.startsWith("/dashboard")) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return response;
+  }
+
   // Create SSR Supabase client (cookie-safe)
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  let user = null;
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         get(name) {
           return request.cookies.get(name)?.value;
         },
         set(name, value, options) {
-          response.cookies.set(name, value, options);
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
         },
         remove(name, options) {
-          response.cookies.set(name, "", { ...options, maxAge: 0 });
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+            maxAge: 0,
+          });
         },
       },
-    },
-  );
+    });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    user = authUser;
+  } catch (error) {
+    console.error("Middleware Supabase error:", error);
+    // If Supabase fails, allow public routes, block protected routes
+    if (isPublic) {
+      return response;
+    }
+    if (pathname.startsWith("/dashboard")) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    return response;
+  }
 
   // PUBLIC PAGES
   if (isPublic) {
