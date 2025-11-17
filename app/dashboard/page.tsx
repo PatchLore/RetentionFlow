@@ -20,7 +20,8 @@ import {
   DollarSign,
 } from "lucide-react";
 import { format } from "date-fns";
-import { FakeReminderModal } from "@/components/demo/FakeReminderModal";
+import { ReminderModal } from "@/components/reminders/ReminderModal";
+import { Toast } from "@/components/reminders/Toast";
 
 interface ReminderStatus {
   sent: string | null;
@@ -46,6 +47,9 @@ export default function RetentionFlowDashboard() {
   const [filterService, setFilterService] = useState("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [sentReminders, setSentReminders] = useState<Set<number>>(new Set());
 
   // Mock data with reminder status
   const overdueClients: Client[] = [
@@ -236,6 +240,26 @@ export default function RetentionFlowDashboard() {
     setModalOpen(true);
   };
 
+  const handleReminderSent = (
+    message: string,
+    method: "sms" | "email",
+    client: Client,
+  ) => {
+    console.log("Demo reminder sent:", { message, method, client });
+    setSentReminders((prev) => new Set(prev).add(client.id));
+    setToastMessage(`✓ Reminder sent to ${client.name}!`);
+    setToastVisible(true);
+
+    // Reset button state after 3 seconds
+    setTimeout(() => {
+      setSentReminders((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(client.id);
+        return newSet;
+      });
+    }, 3000);
+  };
+
   const ReminderStatusBadge = ({ status }: { status: ReminderStatus }) => {
     if (!status.sent) {
       return (
@@ -321,10 +345,23 @@ export default function RetentionFlowDashboard() {
       <ReminderStatusBadge status={client.reminderStatus} />
       <button
         onClick={() => handleSendReminder(client)}
-        className="w-full mt-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
+        className={`w-full mt-4 py-2 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2 ${
+          sentReminders.has(client.id)
+            ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+            : "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+        }`}
       >
-        <Send className="w-4 h-4" />
-        Send Reminder
+        {sentReminders.has(client.id) ? (
+          <>
+            <CheckCircle className="w-4 h-4" />
+            Reminder Sent
+          </>
+        ) : (
+          <>
+            <Send className="w-4 h-4" />
+            Send Reminder
+          </>
+        )}
       </button>
     </div>
   );
@@ -516,17 +553,22 @@ export default function RetentionFlowDashboard() {
       </main>
 
       {/* Reminder Modal */}
-      {selectedClient && (
-        <FakeReminderModal
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          clientName={selectedClient.name}
-          message={
-            selectedClient.message ||
-            `Hi ${selectedClient.name}! You're due for your next appointment.`
-          }
-        />
-      )}
+      <ReminderModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedClient(null);
+        }}
+        client={selectedClient}
+        onSend={handleReminderSent}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        message={toastMessage}
+        isVisible={toastVisible}
+        onClose={() => setToastVisible(false)}
+      />
     </div>
   );
 }
