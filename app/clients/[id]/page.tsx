@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Client, ServiceRule } from "@/lib/types";
 import { addDays, format } from "date-fns";
@@ -229,13 +228,14 @@ export default function ClientDetailPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="service_type">Service Type *</Label>
-                <Select
+                <select
                   id="service_type"
                   value={formData.service_type}
                   onChange={(e) =>
                     setFormData({ ...formData, service_type: e.target.value })
                   }
                   required
+                  className="flex h-10 w-full rounded-xl border-2 border-purple-100 bg-white px-4 py-2 text-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
                 >
                   <option value="">Select a service type</option>
                   {serviceRules.map((rule) => (
@@ -243,7 +243,7 @@ export default function ClientDetailPage() {
                       {rule.service_type} ({rule.interval_days} days)
                     </option>
                   ))}
-                </Select>
+                </select>
               </div>
 
               <div className="space-y-2">
