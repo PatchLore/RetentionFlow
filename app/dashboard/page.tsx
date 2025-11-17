@@ -19,6 +19,7 @@ import {
   Filter,
   AlertCircle,
   DollarSign,
+  RotateCcw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ReminderModal } from "@/components/reminders/ReminderModal";
@@ -43,6 +44,9 @@ interface Client {
   message?: string;
   isOverdue?: boolean;
 }
+
+// Demo mode flag - set to false for production
+const IS_DEMO_MODE = true;
 
 export default function RetentionFlowDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -360,6 +364,14 @@ export default function RetentionFlowDashboard() {
     }, 3000);
   };
 
+  const resetDemoData = () => {
+    setOverdueClients(DEMO_OVERDUE_CLIENTS);
+    setDueSoonClients(DEMO_DUE_SOON_CLIENTS);
+    setSentReminders(new Set());
+    setToastMessage("Demo data reset");
+    setToastVisible(true);
+  };
+
   const ReminderStatusBadge = ({ status }: { status: ReminderStatus }) => {
     if (!status.sent) {
       return (
@@ -494,13 +506,26 @@ export default function RetentionFlowDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Dashboard
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Welcome back! Here's your client overview.
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Welcome back! Here's your client overview.
+            </p>
+          </div>
+          {/* Reset Demo Button - Only visible in demo mode */}
+          {IS_DEMO_MODE && (
+            <button
+              onClick={resetDemoData}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors border border-gray-300 shadow-sm"
+              title="Reset all demo reminder statuses"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reset Demo
+            </button>
+          )}
         </div>
 
         {/* Stats Grid */}
