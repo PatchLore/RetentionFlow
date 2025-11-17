@@ -113,8 +113,8 @@ export async function seedDemoDataForTeam(teamId: string): Promise<void> {
 
   // 4) Create clients with realistic data
   const today = new Date();
-  const clients = [];
-  const followups = [];
+  const clients: any[] = [];
+  const followups: any[] = [];
 
   for (let i = 0; i < 35; i++) {
     const name = UK_NAMES[i % UK_NAMES.length];
