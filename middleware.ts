@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
@@ -10,7 +11,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // PUBLIC ROUTES (always allowed)
+  // PUBLIC ROUTES
   const publicRoutes = [
     "/",
     "/demo",
@@ -25,7 +26,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/api/");
 
-  // Create Supabase client with cookies attached
+  // Create SSR Supabase client (cookie-safe)
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -41,23 +42,22 @@ export async function middleware(request: NextRequest) {
           response.cookies.set(name, "", { ...options, maxAge: 0 });
         },
       },
-    }
+    },
   );
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If the route is public, do not enforce auth
+  // PUBLIC PAGES
   if (isPublic) {
-    // But if user is already logged in, redirect away from login/signup
     if (user && (pathname === "/login" || pathname === "/signup")) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return response;
   }
 
-  // PROTECTED ROUTES
+  // PROTECTED PAGES
   if (!user && pathname.startsWith("/dashboard")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -68,5 +68,3 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
-
-
