@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ReminderModal } from "@/components/reminders/ReminderModal";
+import { SendAllRemindersModal } from "@/components/reminders/SendAllRemindersModal";
 import { Toast } from "@/components/reminders/Toast";
 
 interface ReminderStatus {
@@ -47,6 +48,7 @@ export default function RetentionFlowDashboard() {
   const [filterService, setFilterService] = useState("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [sentReminders, setSentReminders] = useState<Set<number>>(new Set());
@@ -260,6 +262,29 @@ export default function RetentionFlowDashboard() {
     }, 3000);
   };
 
+  const handleSendAllReminders = (clients: Client[]) => {
+    // Mark all clients as having sent reminders (demo only)
+    clients.forEach((client) => {
+      setSentReminders((prev) => new Set(prev).add(client.id));
+    });
+
+    setToastMessage(
+      `✓ ${clients.length} reminder${clients.length === 1 ? "" : "s"} sent (demo only)!`,
+    );
+    setToastVisible(true);
+
+    // Reset button states after 3 seconds
+    setTimeout(() => {
+      setSentReminders((prev) => {
+        const newSet = new Set(prev);
+        clients.forEach((client) => {
+          newSet.delete(client.id);
+        });
+        return newSet;
+      });
+    }, 3000);
+  };
+
   const ReminderStatusBadge = ({ status }: { status: ReminderStatus }) => {
     if (!status.sent) {
       return (
@@ -468,7 +493,10 @@ export default function RetentionFlowDashboard() {
                   </p>
                 </div>
               </div>
-              <button className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-6 py-3 rounded-full font-bold hover:shadow-lg transform hover:scale-105 transition-all">
+              <button
+                onClick={() => setIsBulkModalOpen(true)}
+                className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-6 py-3 rounded-full font-bold hover:shadow-lg transform hover:scale-105 transition-all"
+              >
                 Send All Reminders
               </button>
             </div>
@@ -561,6 +589,14 @@ export default function RetentionFlowDashboard() {
         }}
         client={selectedClient}
         onSend={handleReminderSent}
+      />
+
+      {/* Send All Reminders Modal */}
+      <SendAllRemindersModal
+        open={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        clients={filteredOverdueClients}
+        onSendAll={handleSendAllReminders}
       />
 
       {/* Toast Notification */}
