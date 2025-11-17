@@ -1,32 +1,54 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
-import { type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const origin = requestUrl.origin;
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
 
-  // If no code, redirect to login
+  // No code → redirect to login
   if (!code) {
-    console.error("No code parameter in callback URL");
-    return NextResponse.redirect(`${origin}/login?error=missing_code`);
+    return NextResponse.redirect(new URL("/login?error=missing_code", request.url));
   }
 
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    
-    if (error) {
-      console.error("Error exchanging code for session:", error);
-      return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  // Prepare response with cookies enabled
+  const response = NextResponse.redirect(new URL("/dashboard", request.url));
+
+  // Create SSR supabase client that can set cookies
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name, value, options) {
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name, options) {
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+            maxAge: 0,
+          });
+        },
+      },
     }
+  );
 
-    // Redirect to dashboard after successful authentication
-    return NextResponse.redirect(`${origin}/dashboard`);
-  } catch (error) {
-    console.error("Unexpected error in auth callback:", error);
-    return NextResponse.redirect(`${origin}/login?error=unexpected_error`);
+  // Exchange the code for a session (sets the cookie)
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    console.error("Auth exchange error:", error);
+    return NextResponse.redirect(new URL("/login?error=auth_failed", request.url));
   }
+
+  return response;
 }
 
