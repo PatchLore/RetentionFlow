@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import DemoVideoSection from "./components/DemoVideoSection";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
@@ -121,6 +122,9 @@ export default function LandingPage() {
         </p>
       </section>
 
+      {/* Demo Video Section */}
+      <DemoVideoSection />
+
       {/* Stats Bar */}
       <section className="bg-gradient-to-r from-purple-600 to-pink-600 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -145,7 +149,9 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4 text-gray-900">The Problem</h2>
-          <p className="text-xl text-gray-600">Most salons struggle with client retention</p>
+          <p className="text-xl text-gray-600">
+            Most salons struggle with client retention
+          </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
@@ -171,7 +177,9 @@ export default function LandingPage() {
       <section className="bg-gradient-to-br from-purple-100 to-pink-100 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-gray-900">The Solution</h2>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900">
+              The Solution
+            </h2>
             <p className="text-2xl text-purple-600 font-semibold">
               A Simple Automated System That Increases Repeat Bookings by 20–40%
             </p>
@@ -221,7 +229,9 @@ export default function LandingPage() {
       {/* Features Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4 text-gray-900">Key Features</h2>
+          <h2 className="text-4xl font-bold mb-4 text-gray-900">
+            Key Features
+          </h2>
         </div>
         <div className="space-y-12">
           <div className="flex flex-col md:flex-row items-center gap-8">
@@ -316,7 +326,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-purple-200">Simple setup, powerful results</p>
+            <p className="text-xl text-purple-200">
+              Simple setup, powerful results
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {[
@@ -402,9 +414,7 @@ export default function LandingPage() {
             <div
               key={i}
               className={`bg-white p-8 rounded-3xl shadow-xl ${
-                plan.popular
-                  ? "ring-4 ring-purple-600 transform scale-105"
-                  : ""
+                plan.popular ? "ring-4 ring-purple-600 transform scale-105" : ""
               } hover:shadow-2xl transition-all`}
             >
               {plan.popular && (
@@ -412,10 +422,14 @@ export default function LandingPage() {
                   MOST POPULAR
                 </div>
               )}
-              <h3 className="text-2xl font-bold mb-2 text-gray-900">{plan.name}</h3>
+              <h3 className="text-2xl font-bold mb-2 text-gray-900">
+                {plan.name}
+              </h3>
               <p className="text-gray-600 mb-4">{plan.desc}</p>
               <div className="mb-6">
-                <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
+                <span className="text-5xl font-bold text-gray-900">
+                  {plan.price}
+                </span>
                 <span className="text-gray-600">/month</span>
               </div>
               <ul className="space-y-3 mb-8">
@@ -453,7 +467,10 @@ export default function LandingPage() {
           <p className="text-xl text-purple-100 mb-8">
             See exactly how the system works — no pressure, no commitment.
           </p>
-          <form onSubmit={handleDemo} className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto mb-4">
+          <form
+            onSubmit={handleDemo}
+            className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto mb-4"
+          >
             <input
               type="email"
               value={email}
@@ -483,9 +500,9 @@ export default function LandingPage() {
               Try Demo
             </Link>
           </div>
-                <p className="mt-6 text-purple-100">
-                  Or simply click "Try Demo" to preview the full system
-                </p>
+          <p className="mt-6 text-purple-100">
+            Or simply click "Try Demo" to preview the full system
+          </p>
         </div>
       </section>
 
