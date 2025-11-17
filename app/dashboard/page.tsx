@@ -1,266 +1,519 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, Calendar, AlertCircle, Bell, MessageSquare, Upload } from "lucide-react";
+import {
+  Calendar,
+  Users,
+  Bell,
+  TrendingUp,
+  LogOut,
+  Send,
+  Clock,
+  CheckCircle,
+  Eye,
+  MessageCircle,
+  Mail,
+  Search,
+  Filter,
+  AlertCircle,
+  DollarSign,
+} from "lucide-react";
 import { format } from "date-fns";
 import { FakeReminderModal } from "@/components/demo/FakeReminderModal";
 
-interface FakeClient {
-  id: string;
+interface ReminderStatus {
+  sent: string | null;
+  opened: boolean;
+  responded: boolean;
+  method: "sms" | "email" | null;
+}
+
+interface Client {
+  id: number;
   name: string;
   service: string;
   lastVisit: string;
   nextDue: string;
+  avgSpend: number;
+  reminderStatus: ReminderStatus;
+  message?: string;
   isOverdue?: boolean;
-  message: string;
 }
 
-// Fake data for dashboard
-const STATS = {
-  totalClients: 42,
-  dueSoon: 8,
-  overdue: 3,
-  remindersToday: 5,
-};
-
-const DUE_SOON_CLIENTS: FakeClient[] = [
-  {
-    id: "1",
-    name: "Sarah Mitchell",
-    service: "Full Colour",
-    lastVisit: "2025-01-15",
-    nextDue: "2025-02-15",
-    message: "Hi Sarah! You're due for your next colour treatment. Would you like to book in this week?",
-  },
-  {
-    id: "2",
-    name: "Emma Thompson",
-    service: "Cut & Finish",
-    lastVisit: "2025-01-20",
-    nextDue: "2025-02-20",
-    message: "Hi Emma! It's time for your next cut and finish. Ready to book your appointment?",
-  },
-  {
-    id: "3",
-    name: "Olivia Brown",
-    service: "Highlights",
-    lastVisit: "2025-01-10",
-    nextDue: "2025-02-25",
-    message: "Hi Olivia! Your highlights are due for a refresh. Let's schedule your next visit!",
-  },
-  {
-    id: "4",
-    name: "Sophie Davies",
-    service: "Blow Dry",
-    lastVisit: "2025-01-28",
-    nextDue: "2025-02-11",
-    message: "Hi Sophie! Time for your regular blow dry appointment. Book now to secure your spot!",
-  },
-  {
-    id: "5",
-    name: "Grace Martin",
-    service: "Full Colour",
-    lastVisit: "2025-01-12",
-    nextDue: "2025-02-12",
-    message: "Hi Grace! You're due for your next colour appointment. Let's get you booked in!",
-  },
-];
-
-const OVERDUE_CLIENTS: FakeClient[] = [
-  {
-    id: "6",
-    name: "Charlotte Moore",
-    service: "Full Colour",
-    lastVisit: "2024-12-20",
-    nextDue: "2025-01-20",
-    isOverdue: true,
-    message: "Hi Charlotte! We noticed you're overdue for your colour treatment. Let's get you booked in!",
-  },
-  {
-    id: "7",
-    name: "Isabella White",
-    service: "Cut & Finish",
-    lastVisit: "2024-12-15",
-    nextDue: "2025-01-15",
-    isOverdue: true,
-    message: "Hi Isabella! You're overdue for your cut and finish. Ready to schedule your next appointment?",
-  },
-];
-
-export default function DashboardPage() {
-  const [selectedClient, setSelectedClient] = useState<FakeClient | null>(null);
+export default function RetentionFlowDashboard() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterService, setFilterService] = useState("all");
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleSendReminder = (client: FakeClient) => {
+  // Mock data with reminder status
+  const overdueClients: Client[] = [
+    {
+      id: 1,
+      name: "Charlotte Moore",
+      service: "Full Colour",
+      lastVisit: "Dec 20, 2024",
+      nextDue: "Jan 20, 2025",
+      avgSpend: 140,
+      reminderStatus: {
+        sent: "Nov 10, 2024",
+        opened: true,
+        responded: false,
+        method: "sms",
+      },
+      message:
+        "Hi Charlotte! We noticed you're overdue for your colour treatment. Let's get you booked in!",
+      isOverdue: true,
+    },
+    {
+      id: 2,
+      name: "Isabella White",
+      service: "Cut & Finish",
+      lastVisit: "Dec 15, 2024",
+      nextDue: "Jan 15, 2025",
+      avgSpend: 85,
+      reminderStatus: {
+        sent: "Nov 5, 2024",
+        opened: false,
+        responded: false,
+        method: "email",
+      },
+      message:
+        "Hi Isabella! You're overdue for your cut and finish. Ready to schedule your next appointment?",
+      isOverdue: true,
+    },
+    {
+      id: 3,
+      name: "Ava Johnson",
+      service: "Highlights",
+      lastVisit: "Dec 10, 2024",
+      nextDue: "Jan 10, 2025",
+      avgSpend: 195,
+      reminderStatus: {
+        sent: null,
+        opened: false,
+        responded: false,
+        method: null,
+      },
+      message:
+        "Hi Ava! Your highlights are overdue for a refresh. Let's schedule your next visit!",
+      isOverdue: true,
+    },
+  ];
+
+  const dueSoonClients: Client[] = [
+    {
+      id: 4,
+      name: "Sarah Mitchell",
+      service: "Full Colour",
+      lastVisit: "Jan 15, 2025",
+      nextDue: "Feb 15, 2025",
+      avgSpend: 150,
+      reminderStatus: {
+        sent: null,
+        opened: false,
+        responded: false,
+        method: null,
+      },
+      message:
+        "Hi Sarah! You're due for your next colour treatment. Would you like to book in this week?",
+    },
+    {
+      id: 5,
+      name: "Emma Thompson",
+      service: "Cut & Finish",
+      lastVisit: "Jan 20, 2025",
+      nextDue: "Feb 20, 2025",
+      avgSpend: 75,
+      reminderStatus: {
+        sent: "Nov 15, 2024",
+        opened: true,
+        responded: true,
+        method: "sms",
+      },
+      message:
+        "Hi Emma! It's time for your next cut and finish. Ready to book your appointment?",
+    },
+    {
+      id: 6,
+      name: "Olivia Brown",
+      service: "Highlights",
+      lastVisit: "Jan 10, 2025",
+      nextDue: "Feb 25, 2025",
+      avgSpend: 180,
+      reminderStatus: {
+        sent: null,
+        opened: false,
+        responded: false,
+        method: null,
+      },
+      message:
+        "Hi Olivia! Your highlights are due for a refresh. Let's schedule your next visit!",
+    },
+    {
+      id: 7,
+      name: "Sophie Davies",
+      service: "Blow Dry",
+      lastVisit: "Jan 28, 2025",
+      nextDue: "Feb 11, 2025",
+      avgSpend: 45,
+      reminderStatus: {
+        sent: "Nov 12, 2024",
+        opened: true,
+        responded: false,
+        method: "email",
+      },
+      message:
+        "Hi Sophie! Time for your regular blow dry appointment. Book now to secure your spot!",
+    },
+    {
+      id: 8,
+      name: "Grace Martin",
+      service: "Full Colour",
+      lastVisit: "Jan 12, 2025",
+      nextDue: "Feb 12, 2025",
+      avgSpend: 135,
+      reminderStatus: {
+        sent: null,
+        opened: false,
+        responded: false,
+        method: null,
+      },
+      message:
+        "Hi Grace! You're due for your next colour appointment. Let's get you booked in!",
+    },
+  ];
+
+  // Filter clients based on search and service filter
+  const filteredOverdueClients = useMemo(() => {
+    return overdueClients.filter((client) => {
+      const matchesSearch = client.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesService =
+        filterService === "all" ||
+        client.service
+          .toLowerCase()
+          .includes(
+            filterService
+              .toLowerCase()
+              .replace("colour", "color")
+              .replace("color", "colour"),
+          );
+      return matchesSearch && matchesService;
+    });
+  }, [searchTerm, filterService]);
+
+  const filteredDueSoonClients = useMemo(() => {
+    return dueSoonClients.filter((client) => {
+      const matchesSearch = client.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesService =
+        filterService === "all" ||
+        client.service
+          .toLowerCase()
+          .includes(
+            filterService
+              .toLowerCase()
+              .replace("colour", "color")
+              .replace("color", "colour"),
+          );
+      return matchesSearch && matchesService;
+    });
+  }, [searchTerm, filterService]);
+
+  const calculateRevenue = (clients: Client[]) => {
+    return clients.reduce((sum, client) => sum + client.avgSpend, 0);
+  };
+
+  const overdueRevenue = calculateRevenue(filteredOverdueClients);
+  const dueSoonRevenue = calculateRevenue(filteredDueSoonClients);
+
+  const handleSendReminder = (client: Client) => {
     setSelectedClient(client);
     setModalOpen(true);
   };
 
+  const ReminderStatusBadge = ({ status }: { status: ReminderStatus }) => {
+    if (!status.sent) {
+      return (
+        <div className="text-xs text-gray-500 mt-2">
+          <Clock className="w-3 h-3 inline mr-1" />
+          No reminder sent yet
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-2 space-y-1">
+        <div className="flex items-center gap-2 text-xs">
+          {status.method === "sms" ? (
+            <MessageCircle className="w-3 h-3 text-purple-600" />
+          ) : (
+            <Mail className="w-3 h-3 text-purple-600" />
+          )}
+          <span className="text-gray-600">Sent: {status.sent}</span>
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          {status.opened ? (
+            <span className="flex items-center gap-1 text-green-600">
+              <Eye className="w-3 h-3" />
+              Opened
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-gray-400">
+              <Eye className="w-3 h-3" />
+              Not opened
+            </span>
+          )}
+          {status.responded ? (
+            <span className="flex items-center gap-1 text-green-600">
+              <CheckCircle className="w-3 h-3" />
+              Responded
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-orange-500">
+              <AlertCircle className="w-3 h-3" />
+              No response
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const ClientCard = ({
+    client,
+    isOverdue,
+  }: {
+    client: Client;
+    isOverdue: boolean;
+  }) => (
+    <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-purple-100 hover:border-purple-300 hover:shadow-xl transition-all">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="font-bold text-lg text-gray-900">{client.name}</h3>
+          <p className="text-purple-600 font-semibold">{client.service}</p>
+        </div>
+        {isOverdue && (
+          <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold">
+            OVERDUE
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-2 text-sm text-gray-600 mb-3">
+        <div className="flex justify-between">
+          <span>Last Visit:</span>
+          <span className="font-medium">{client.lastVisit}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Next Due:</span>
+          <span className="font-medium">{client.nextDue}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span>Avg. Spend:</span>
+          <span className="font-bold text-green-600">£{client.avgSpend}</span>
+        </div>
+      </div>
+      <ReminderStatusBadge status={client.reminderStatus} />
+      <button
+        onClick={() => handleSendReminder(client)}
+        className="w-full mt-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
+      >
+        <Send className="w-4 h-4" />
+        Send Reminder
+      </button>
+    </div>
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-          Dashboard
-        </h1>
-        <p className="text-gray-600">Welcome back! Here's your client overview.</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Welcome back! Here's your client overview.
+          </p>
+        </div>
 
-      {/* Stats Section */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
-        <Card className="hover:shadow-2xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Total Clients</CardTitle>
-            <Users className="h-5 w-5 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{STATS.totalClients}</div>
-            <p className="text-xs text-gray-500 mt-2">Active client database</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-2xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Due Soon</CardTitle>
-            <Calendar className="h-5 w-5 text-pink-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{STATS.dueSoon}</div>
-            <p className="text-xs text-gray-500 mt-2">Clients due in next 7 days</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-2xl transition-shadow border-red-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Overdue</CardTitle>
-            <AlertCircle className="h-5 w-5 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{STATS.overdue}</div>
-            <p className="text-xs text-gray-500 mt-2">Require immediate attention</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-2xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Reminders Today</CardTitle>
-            <Bell className="h-5 w-5 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{STATS.remindersToday}</div>
-            <p className="text-xs text-gray-500 mt-2">Scheduled for today</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Overdue Clients Section */}
-      {OVERDUE_CLIENTS.length > 0 && (
-        <div className="mb-12">
-          <div className="flex items-center gap-2 mb-6">
-            <AlertCircle className="h-6 w-6 text-red-600" />
-            <h2 className="text-3xl font-bold text-gray-900">Overdue Clients</h2>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-purple-100">
+            <div className="flex items-center justify-between mb-2">
+              <Users className="w-8 h-8 text-purple-600" />
+              <span className="text-3xl font-bold text-gray-900">42</span>
+            </div>
+            <h3 className="font-semibold text-gray-700">Total Clients</h3>
+            <p className="text-sm text-gray-500">Active client database</p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {OVERDUE_CLIENTS.map((client) => (
-              <Card
-                key={client.id}
-                className="border-2 border-red-200 bg-red-50/50 hover:shadow-2xl transition-all transform hover:scale-[1.02]"
-              >
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-red-900">{client.name}</CardTitle>
-                  <CardDescription className="text-red-700 font-medium">
-                    {client.service}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold">Last Visit:</span>{" "}
-                      {format(new Date(client.lastVisit), "MMM d, yyyy")}
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-semibold">Next Due:</span>{" "}
-                      <span className="text-red-600 font-bold">
-                        {format(new Date(client.nextDue), "MMM d, yyyy")} (Overdue)
-                      </span>
-                    </p>
-                    <Button
-                      className="w-full font-semibold mt-4"
-                      size="sm"
-                      onClick={() => handleSendReminder(client)}
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Send Reminder
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-orange-100">
+            <div className="flex items-center justify-between mb-2">
+              <Clock className="w-8 h-8 text-orange-600" />
+              <span className="text-3xl font-bold text-gray-900">
+                {dueSoonClients.length}
+              </span>
+            </div>
+            <h3 className="font-semibold text-gray-700">Due Soon</h3>
+            <p className="text-sm text-gray-500">Next 7 days</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-red-100">
+            <div className="flex items-center justify-between mb-2">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+              <span className="text-3xl font-bold text-gray-900">
+                {overdueClients.length}
+              </span>
+            </div>
+            <h3 className="font-semibold text-gray-700">Overdue</h3>
+            <p className="text-sm text-gray-500">Need attention</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-green-100">
+            <div className="flex items-center justify-between mb-2">
+              <Bell className="w-8 h-8 text-green-600" />
+              <span className="text-3xl font-bold text-gray-900">5</span>
+            </div>
+            <h3 className="font-semibold text-gray-700">Reminders Today</h3>
+            <p className="text-sm text-gray-500">Scheduled</p>
           </div>
         </div>
-      )}
 
-      {/* Clients Due Soon Section */}
-      <div className="mb-12">
-        <div className="flex items-center gap-2 mb-6">
-          <Calendar className="h-6 w-6 text-purple-600" />
-          <h2 className="text-3xl font-bold text-gray-900">Clients Due Soon</h2>
+        {/* Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <div className="flex-1 relative">
+            <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search clients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-purple-200 focus:border-purple-600 focus:outline-none transition-colors"
+            />
+          </div>
+          <select
+            value={filterService}
+            onChange={(e) => setFilterService(e.target.value)}
+            className="px-6 py-3 rounded-full border-2 border-purple-200 focus:border-purple-600 focus:outline-none transition-colors bg-white"
+          >
+            <option value="all">All Services</option>
+            <option value="colour">Full Colour</option>
+            <option value="cut">Cut & Finish</option>
+            <option value="highlights">Highlights</option>
+            <option value="blowdry">Blow Dry</option>
+          </select>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {DUE_SOON_CLIENTS.map((client) => (
-            <Card
-              key={client.id}
-              className="hover:shadow-2xl transition-all transform hover:scale-[1.02]"
-            >
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-gray-900">{client.name}</CardTitle>
-                <CardDescription className="text-gray-600 font-medium">
-                  {client.service}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-700">
-                    <span className="font-semibold">Last Visit:</span>{" "}
-                    {format(new Date(client.lastVisit), "MMM d, yyyy")}
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    <span className="font-semibold">Next Due:</span>{" "}
-                    <span className="text-purple-600 font-semibold">
-                      {format(new Date(client.nextDue), "MMM d, yyyy")}
-                    </span>
-                  </p>
-                  <Button
-                    className="w-full font-semibold mt-4"
-                    size="sm"
-                    onClick={() => handleSendReminder(client)}
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Send Reminder
-                  </Button>
+
+        {/* Revenue Impact Section - Overdue */}
+        {filteredOverdueClients.length > 0 && (
+          <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-red-600" />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    £{overdueRevenue} at Risk
+                  </h3>
+                  <p className="text-gray-700">
+                    <span className="font-bold text-red-600">
+                      {filteredOverdueClients.length} overdue clients
+                    </span>{" "}
+                    haven't rebooked yet
+                  </p>
+                </div>
+              </div>
+              <button className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-6 py-3 rounded-full font-bold hover:shadow-lg transform hover:scale-105 transition-all">
+                Send All Reminders
+              </button>
+            </div>
+          </div>
+        )}
 
-      {/* Bottom CTA */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-12 text-center text-white">
-        <h3 className="text-3xl font-bold mb-4">Ready to import your clients?</h3>
-        <p className="text-xl text-purple-100 mb-8">
-          Start managing your client retention with RetentionFlow today.
-        </p>
-        <Link href="/dashboard/clients">
-          <Button className="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-2xl transform hover:scale-105 transition-all">
-            <Upload className="mr-2 h-5 w-5" />
-            Import Clients
-          </Button>
-        </Link>
-      </div>
+        {/* Overdue Clients */}
+        {filteredOverdueClients.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Overdue Clients
+              </h2>
+              <span className="bg-red-100 text-red-600 px-4 py-2 rounded-full font-bold">
+                {filteredOverdueClients.length} Clients
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredOverdueClients.map((client) => (
+                <ClientCard key={client.id} client={client} isOverdue={true} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Revenue Impact Section - Due Soon */}
+        {filteredDueSoonClients.length > 0 && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-6 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                <DollarSign className="w-8 h-8 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                  £{dueSoonRevenue} Expected Revenue
+                </h3>
+                <p className="text-gray-700">
+                  From{" "}
+                  <span className="font-bold text-purple-600">
+                    {filteredDueSoonClients.length} clients
+                  </span>{" "}
+                  due in the next 7 days
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Clients Due Soon */}
+        {filteredDueSoonClients.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Clients Due Soon
+              </h2>
+              <span className="bg-purple-100 text-purple-600 px-4 py-2 rounded-full font-bold">
+                {filteredDueSoonClients.length} Clients
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDueSoonClients.map((client) => (
+                <ClientCard key={client.id} client={client} isOverdue={false} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CTA Section */}
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-8 text-center text-white">
+          <h3 className="text-2xl font-bold mb-3">
+            Ready to import your clients?
+          </h3>
+          <p className="text-purple-100 mb-6">
+            Start managing your client retention with RetentionFlow today.
+          </p>
+          <Link href="/dashboard/clients">
+            <button className="bg-white text-purple-600 px-8 py-3 rounded-full font-bold hover:shadow-2xl transform hover:scale-105 transition-all">
+              Import Clients
+            </button>
+          </Link>
+        </div>
+      </main>
 
       {/* Reminder Modal */}
       {selectedClient && (
@@ -268,7 +521,10 @@ export default function DashboardPage() {
           open={modalOpen}
           onOpenChange={setModalOpen}
           clientName={selectedClient.name}
-          message={selectedClient.message}
+          message={
+            selectedClient.message ||
+            `Hi ${selectedClient.name}! You're due for your next appointment.`
+          }
         />
       )}
     </div>
